@@ -187,6 +187,45 @@ describe("applyAuthChoiceMiniMax", () => {
     expect(parsed.profiles?.["minimax-cn:default"]?.key).toBeUndefined();
   });
 
+  it.each([
+    {
+      caseName: "sets authHeader: true for minimax-api provider config",
+      authChoice: "minimax-api" as const,
+      providerId: "minimax",
+    },
+    {
+      caseName: "sets authHeader: true for minimax-api-key-cn provider config",
+      authChoice: "minimax-api-key-cn" as const,
+      providerId: "minimax-cn",
+    },
+    {
+      caseName: "sets authHeader: true for minimax-api-lightning provider config",
+      authChoice: "minimax-api-lightning" as const,
+      providerId: "minimax",
+    },
+  ])("$caseName", async ({ authChoice, providerId }) => {
+    await setupTempState();
+    resetMiniMaxEnv();
+
+    const result = await applyAuthChoiceMiniMax({
+      authChoice,
+      config: {},
+      prompter: createMinimaxPrompter(),
+      runtime: createExitThrowingRuntime(),
+      setDefaultModel: true,
+      opts: {
+        tokenProvider: providerId,
+        token: "mm-test-token",
+      },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.config.models?.providers?.[providerId]).toMatchObject({
+      api: "anthropic-messages",
+      authHeader: true,
+    });
+  });
+
   it("uses minimax-api-lightning default model", async () => {
     const agentDir = await setupTempState();
     resetMiniMaxEnv();
